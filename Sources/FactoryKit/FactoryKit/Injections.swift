@@ -67,6 +67,23 @@ import SwiftUI
         self.dependency = C.shared[keyPath: keyPath]()
     }
 
+    /// Initializes the property wrapper from a MainActorFactory. Resolution
+    /// happens on the main actor at initialization, so the enclosing type must
+    /// be main-actor isolated.
+    /// - Parameter keyPath: KeyPath to a MainActorFactory on the default Container.
+    @MainActor
+    public init(_ keyPath: KeyPath<Container, MainActorFactory<T>>) where T: Sendable {
+        self.thunk = { Container.shared[keyPath: keyPath].factory }
+        self.dependency = Container.shared[keyPath: keyPath]()
+    }
+
+    /// Initializes the property wrapper from a MainActorFactory on a custom container.
+    @MainActor
+    public init<C: SharedContainer>(_ keyPath: KeyPath<C, MainActorFactory<T>>) where T: Sendable {
+        self.thunk = { C.shared[keyPath: keyPath].factory }
+        self.dependency = C.shared[keyPath: keyPath]()
+    }
+
     /// Manages the wrapped dependency.
     public var wrappedValue: T {
         get { return dependency }
@@ -131,6 +148,23 @@ extension Injected: @unchecked Sendable where T: Sendable {}
     /// - Parameter keyPath: KeyPath to a Factory on the specified Container.
     public init<C:SharedContainer>(_ keyPath: KeyPath<C, Factory<T>>) {
         self.thunk = { C.shared[keyPath: keyPath] }
+        self.storage = Storage()
+    }
+
+    /// Initializes the property wrapper from a MainActorFactory. The init is
+    /// main-actor isolated so a non-main-actor enclosing type fails to compile,
+    /// steering the consumer to a main-actor context or a different dependency.
+    /// - Parameter keyPath: KeyPath to a MainActorFactory on the default Container.
+    @MainActor
+    public init(_ keyPath: KeyPath<Container, MainActorFactory<T>>) where T: Sendable {
+        self.thunk = { Container.shared[keyPath: keyPath].factory }
+        self.storage = Storage()
+    }
+
+    /// Initializes the property wrapper from a MainActorFactory on a custom container.
+    @MainActor
+    public init<C: SharedContainer>(_ keyPath: KeyPath<C, MainActorFactory<T>>) where T: Sendable {
+        self.thunk = { C.shared[keyPath: keyPath].factory }
         self.storage = Storage()
     }
 
@@ -234,6 +268,23 @@ extension LazyInjected: @unchecked Sendable where T: Sendable {}
         self.storage = Storage()
     }
 
+    /// Initializes the property wrapper from a MainActorFactory. The init is
+    /// main-actor isolated so a non-main-actor enclosing type fails to compile,
+    /// steering the consumer to a main-actor context or a different dependency.
+    /// - Parameter keyPath: KeyPath to a MainActorFactory on the default Container.
+    @MainActor
+    public init(_ keyPath: KeyPath<Container, MainActorFactory<T>>) where T: Sendable {
+        self.thunk = { Container.shared[keyPath: keyPath].factory }
+        self.storage = Storage()
+    }
+
+    /// Initializes the property wrapper from a MainActorFactory on a custom container.
+    @MainActor
+    public init<C: SharedContainer>(_ keyPath: KeyPath<C, MainActorFactory<T>>) where T: Sendable {
+        self.thunk = { C.shared[keyPath: keyPath].factory }
+        self.storage = Storage()
+    }
+
     /// Manages the wrapped dependency, which is resolved when this value is accessed for the first time.
     public var wrappedValue: T? {
         get {
@@ -333,6 +384,21 @@ extension WeakLazyInjected: @unchecked Sendable where T: Sendable {}
     /// - Parameter keyPath: KeyPath to a Factory on the specified Container.
     public init<C: SharedContainer>(_ keyPath: KeyPath<C, Factory<T>>) {
         self.thunk = { C.shared[keyPath: keyPath] }
+    }
+
+    /// Initializes the property wrapper from a MainActorFactory. The init is
+    /// main-actor isolated so a non-main-actor enclosing type fails to compile,
+    /// steering the consumer to a main-actor context or a different dependency.
+    /// - Parameter keyPath: KeyPath to a MainActorFactory on the default Container.
+    @MainActor
+    public init(_ keyPath: KeyPath<Container, MainActorFactory<T>>) where T: Sendable {
+        self.thunk = { Container.shared[keyPath: keyPath].factory }
+    }
+
+    /// Initializes the property wrapper from a MainActorFactory on a custom container.
+    @MainActor
+    public init<C: SharedContainer>(_ keyPath: KeyPath<C, MainActorFactory<T>>) where T: Sendable {
+        self.thunk = { C.shared[keyPath: keyPath].factory }
     }
 
     /// Manages the wrapped dependency.
@@ -442,6 +508,16 @@ extension InjectedType: @unchecked Sendable where T: Sendable {}
     public init<C:SharedContainer>(_ keyPath: KeyPath<C, Factory<T>>) {
         self._dependency = StateObject<T>(wrappedValue: C.shared[keyPath: keyPath]())
     }
+    /// Initializes the property wrapper from a MainActorFactory. The wrapper is
+    /// main-actor isolated, so the dependency resolves on the main actor.
+    /// - Parameter keyPath: KeyPath to a MainActorFactory on the default Container.
+    public init(_ keyPath: KeyPath<Container, MainActorFactory<T>>) where T: Sendable {
+        self._dependency = StateObject<T>(wrappedValue: Container.shared[keyPath: keyPath]())
+    }
+    /// Initializes the property wrapper from a MainActorFactory on a custom container.
+    public init<C:SharedContainer>(_ keyPath: KeyPath<C, MainActorFactory<T>>) where T: Sendable {
+        self._dependency = StateObject<T>(wrappedValue: C.shared[keyPath: keyPath]())
+    }
     /// Manages the wrapped dependency.
     public var wrappedValue: T {
         get { dependency }
@@ -496,6 +572,18 @@ extension InjectedObject: @unchecked Sendable where T: Sendable {}
     /// - Parameter keyPath: KeyPath to a Factory on the specified Container.
     public init<C: SharedContainer>(_ keyPath: KeyPath<C, Factory<T>>) {
         self._dependency = .init(wrappedValue: ThunkedValue(thunkedValue: { C.shared[keyPath: keyPath]() }))
+    }
+    /// Initializes the property wrapper from a MainActorFactory. The wrapper is
+    /// main-actor isolated, so the dependency resolves on the main actor.
+    /// - Parameter keyPath: KeyPath to a MainActorFactory on the default Container.
+    public init(_ keyPath: KeyPath<Container, MainActorFactory<T>>) where T: Sendable {
+        let value = Container.shared[keyPath: keyPath]()
+        self._dependency = .init(wrappedValue: ThunkedValue(thunkedValue: { value }))
+    }
+    /// Initializes the property wrapper from a MainActorFactory on a custom container.
+    public init<C: SharedContainer>(_ keyPath: KeyPath<C, MainActorFactory<T>>) where T: Sendable {
+        let value = C.shared[keyPath: keyPath]()
+        self._dependency = .init(wrappedValue: ThunkedValue(thunkedValue: { value }))
     }
     /// Provides direct access to the wrapped observable dependency.
     public var wrappedValue: T {
