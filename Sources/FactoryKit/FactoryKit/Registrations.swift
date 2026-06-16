@@ -71,7 +71,7 @@ public nonisolated struct FactoryRegistration<P,T> {
 
         manager.lock.unlock()
 
-        let current: (P) -> T
+        let current: ParameterFactoryType<P, T>
         let (instance, instantiated): (T, Bool)
 
         if globalLockRequired {
@@ -167,7 +167,7 @@ extension FactoryRegistration {
     /// - Parameters:
     ///   - id: ID of associated Factory.
     ///   - factory: Factory closure called to create a new instance of the service when needed.
-    internal func register(factory: @escaping (P) -> T) {
+    internal func register(factory: @escaping ParameterFactoryType<P, T>) {
         defer { container.manager.lock.unlock()  }
         container.manager.lock.lock()
         container.unsafeCheckAutoRegistration()
@@ -208,7 +208,7 @@ extension FactoryRegistration {
     }
 
     /// Registers a new context.
-    internal func register(context: FactoryContextType, key: FactoryKey, factory: @escaping (P) -> T) {
+    internal func register(context: FactoryContextType, key: FactoryKey, factory: @escaping ParameterFactoryType<P, T>) {
         options { options in
             switch context {
             case .arg(let arg):
@@ -375,5 +375,5 @@ extension FactoryOptions {
 internal protocol AnyFactory {}
 
 internal struct TypedFactory<P,T>: AnyFactory {
-    let factory: (P) -> T
+    let factory: ParameterFactoryType<P, T>
 }

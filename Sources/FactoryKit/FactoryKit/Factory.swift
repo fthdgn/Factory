@@ -26,8 +26,8 @@
 
 import Foundation
 
-public typealias ParameterFactoryType<P, T> = (P) -> T
-public typealias VoidFactoryType<T> = () -> T
+public typealias ParameterFactoryType<P, T> = @Sendable (P) -> T
+public typealias VoidFactoryType<T> = @Sendable () -> T
 
 // MARK: - Factory
 
